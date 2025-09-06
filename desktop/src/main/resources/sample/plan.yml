@@ -1,0 +1,79 @@
+schema_version: v1.0
+plan:
+  id: plan_powerbuilding_base
+  name: Powerbuilding Base (4x/week)
+  duration_weeks: 4
+  days_per_week: 4
+
+  # Choose how E1RM is computed from (weight, reps, achievedRPE)
+  # You can switch to "epley" later if you prefer.
+  e1rm_model:
+    type: rpe_table
+    params:
+      # (example) percent of 1RM by reps & RPE; app ships a default table if omitted
+      source: "default_rir_to_percent_table"
+
+  weeks:
+    - week_index: 1
+      days:
+        - day_index: 1
+          name: Upper 1
+          sessions:
+            # --- EXERCISE A: first set anchors E1RM; follow-ups auto %
+            - exercise_id: ex_tempo_bench_120
+              notes: "Anchor set at target RPE; follow with 70/72.5/75% E1RM"
+              sets:
+                - reps: 5
+                  target_rpe: 7.5
+                  rule:
+                    type: ANCHOR_RPE_THEN_PERCENT_E1RM
+                    anchor_set_index: 1
+                - reps: 5
+                  rule:
+                    type: ANCHOR_RPE_THEN_PERCENT_E1RM
+                    anchor_set_index: 1
+                    percent_of_e1rm: 0.70
+                    round_to: 2.5
+                - reps: 5
+                  rule:
+                    type: ANCHOR_RPE_THEN_PERCENT_E1RM
+                    anchor_set_index: 1
+                    percent_of_e1rm: 0.725
+                    round_to: 2.5
+                - reps: 5
+                  rule:
+                    type: ANCHOR_RPE_THEN_PERCENT_E1RM
+                    anchor_set_index: 1
+                    percent_of_e1rm: 0.75
+                    round_to: 2.5
+
+            # --- EXERCISE B: pure FREE_RPE sets
+            - exercise_id: ex_butterfly
+              sets:
+                - reps: 12
+                  target_rpe: 8
+                  rule: { type: FREE_RPE }
+                - reps: 12
+                  target_rpe: 8
+                  rule: { type: FREE_RPE }
+                - reps: 12
+                  target_rpe: 8
+                  rule: { type: FREE_RPE }
+
+        - day_index: 3
+          name: Lower 1
+          sessions:
+            - exercise_id: ex_bench_flat
+              notes: "Accessory pressing, simple RPE"
+              sets:
+                - reps: 8
+                  target_rpe: 7
+                  rule: { type: FREE_RPE }
+                - reps: 8
+                  target_rpe: 7.5
+                  rule: { type: FREE_RPE }
+                - reps: 8
+                  target_rpe: 8
+                  rule: { type: FREE_RPE }
+
+    # Copy/modify for weeks 2–4 (progression, % bumps, etc.)

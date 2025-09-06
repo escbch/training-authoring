@@ -1,0 +1,105 @@
+schema_version: "v1.0"
+plan:
+  id: "powerbuilding_1"
+  name: "Powerbuilding_1"
+  duration_weeks: 4
+  days_per_week: 5
+  e1rm_model: !<com.example.training.model.E1rmModel.RpeTable>
+    source: "default_rir_to_percent_table"
+  weeks:
+  - week_index: 1
+    days:
+    - day_index: 1
+      name: "Day 1"
+      sessions:
+      - exercise_id: "bench_press"
+        notes: null
+        sets:
+        - reps: 5
+          target_rpe: 7.0
+          rule: !<com.example.training.model.LoadRule.FREE_RPE> {}
+        - reps: 5
+          target_rpe: 7.0
+          rule: !<com.example.training.model.LoadRule.FREE_RPE> {}
+        - reps: 5
+          target_rpe: 7.0
+          rule: !<com.example.training.model.LoadRule.FREE_RPE> {}
+      - exercise_id: "dumbbell_press"
+        notes: null
+        sets:
+        - reps: 5
+          target_rpe: 7.0
+          rule: !<com.example.training.model.LoadRule.FREE_RPE> {}
+        - reps: 5
+          target_rpe: 7.0
+          rule: !<com.example.training.model.LoadRule.FREE_RPE> {}
+        - reps: 5
+          target_rpe: 7.0
+          rule: !<com.example.training.model.LoadRule.FREE_RPE> {}
+      - exercise_id: "pull_ups"
+        notes: null
+        sets:
+        - reps: 10
+          target_rpe: 7.5
+          rule: !<com.example.training.model.LoadRule.ANCHOR_RPE_THEN_PERCENT_E1RM>
+            anchor_set_index: 1
+            percent_of_e1rm: null
+            round_to: 2.5
+        - reps: 10
+          target_rpe: null
+          rule: !<com.example.training.model.LoadRule.ANCHOR_RPE_THEN_PERCENT_E1RM>
+            anchor_set_index: 1
+            percent_of_e1rm: 0.7
+            round_to: 2.5
+        - reps: 10
+          target_rpe: null
+          rule: !<com.example.training.model.LoadRule.ANCHOR_RPE_THEN_PERCENT_E1RM>
+            anchor_set_index: 1
+            percent_of_e1rm: 0.7
+            round_to: 2.5
+      - exercise_id: "dumbbell_press"
+        notes: null
+        sets:
+        - reps: 5
+          target_rpe: 7.5
+          rule: !<com.example.training.model.LoadRule.ANCHOR_RPE_THEN_PERCENT_E1RM>
+            anchor_set_index: 1
+            percent_of_e1rm: null
+            round_to: 2.5
+        - reps: 5
+          target_rpe: null
+          rule: !<com.example.training.model.LoadRule.ANCHOR_RPE_THEN_PERCENT_E1RM>
+            anchor_set_index: 1
+            percent_of_e1rm: 0.7
+            round_to: 2.5
+        - reps: 5
+          target_rpe: null
+          rule: !<com.example.training.model.LoadRule.ANCHOR_RPE_THEN_PERCENT_E1RM>
+            anchor_set_index: 1
+            percent_of_e1rm: 0.6
+            round_to: 2.5
+        - reps: 5
+          target_rpe: null
+          rule: !<com.example.training.model.LoadRule.ANCHOR_RPE_THEN_PERCENT_E1RM>
+            anchor_set_index: 1
+            percent_of_e1rm: 0.5
+            round_to: 2.5
+    - day_index: 2
+      name: "Day 2"
+      sessions: []
+    - day_index: 3
+      name: "Day 3"
+      sessions: []
+    - day_index: 4
+      name: "Day 4"
+      sessions: []
+    - day_index: 5
+      name: "Day 5"
+      sessions: []
+  - week_index: 2
+    days: []
+  - week_index: 3
+    days: []
+  - week_index: 4
+    days: []
+exercise_library: []

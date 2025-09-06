@@ -1,0 +1,41 @@
+- id: "bench_press"
+  name: "Bench Press"
+  tempo: null
+  aliases: []
+  muscles:
+    primary: "Chest"
+    secondary: "Shoulder"
+    tertiary: "Triceps"
+  tags:
+  - "compound"
+  - "competition"
+- id: "dumbbell_press"
+  name: "Dumbbell Press"
+  tempo: null
+  aliases: []
+  muscles:
+    primary: "Chest"
+    secondary: "Shoulder"
+    tertiary: "Triceps"
+  tags:
+  - "compound"
+- id: "pull_ups"
+  name: "Pull Ups"
+  tempo: null
+  aliases: []
+  muscles:
+    primary: "Back"
+    secondary: "Biceps"
+    tertiary: null
+  tags:
+  - "compound"
+- id: "cable_row"
+  name: "Cable Row"
+  tempo: null
+  aliases: []
+  muscles:
+    primary: "Back"
+    secondary: "Biceps"
+    tertiary: null
+  tags:
+  - "isolation"
