@@ -30,6 +30,8 @@ fun AppShell() {
     var showPlanWizard by remember { mutableStateOf(false) }
     var showExerciseDialog by remember { mutableStateOf(false) }
     var planMenuOpen by remember { mutableStateOf(false) }
+    var showCopyWeekDialog by remember { mutableStateOf(false) }
+    var copyDialogDefaultFrom by remember { mutableStateOf<Int?>(null) }
     var libMenuOpen by remember { mutableStateOf(false) }
     var pendingAddExercise: ExerciseDef? by remember { mutableStateOf(null) }
 
@@ -107,6 +109,14 @@ fun AppShell() {
                         Box {
                             TextButton(onClick = { planMenuOpen = true }) { Text("Plan") }
                             DropdownMenu(expanded = planMenuOpen, onDismissRequest = { planMenuOpen = false }) {
+                                DropdownMenuItem(text = { Text("Copy selected week…") }, onClick = {
+                                    copyDialogDefaultFrom = (app.selection as? state.Selection.Week)?.index?.plus(1)
+                                    showCopyWeekDialog = true; planMenuOpen = false
+                                })
+                                DropdownMenuItem(text = { Text("Copy Week 1 → All weeks") }, onClick = {
+                                    app.copyWeek1ToAllWeeks(); planMenuOpen = false
+                                })
+
                                 DropdownMenuItem(text = { Text("New Plan…") }, onClick = {
                                     showPlanWizard = true; planMenuOpen = false
                                 })
@@ -188,8 +198,17 @@ fun AppShell() {
         }
 
         val exToAdd = pendingAddExercise
+        if (showCopyWeekDialog) {
+            ui.dialog.CopyWeekDialog(
+                totalWeeks = app.plan?.plan?.weeks?.size ?: 0,
+                defaultFrom = copyDialogDefaultFrom,
+                onCancel = { showCopyWeekDialog = false },
+                onConfirm = { from, to -> app.copyWeek(from, to); showCopyWeekDialog = false }
+            )
+        }
+
         if (exToAdd != null) {
-            ui.dialogs.AddToDayDialog(
+            ui.dialog.AddToDayDialog(
                 exerciseName = exToAdd.name,
                 onDismiss = { pendingAddExercise = null },
                 onCreate = { template ->

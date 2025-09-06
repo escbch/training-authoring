@@ -42,16 +42,6 @@ class AppState {
         selection = Selection.None
     }
 
-    fun copyWeek1ToAllWeeks() {
-        val tp = plan ?: return
-        val w1 = tp.plan.weeks.firstOrNull() ?: return
-        if (w1.days.isEmpty()) return
-        val cloned = tp.plan.weeks.mapIndexed { idx, w ->
-            if (idx == 0) w else w.copy(days = w1.days.map { it.copy(sessions = it.sessions.map { s -> s.copy(sets = s.sets.toList()) }) })
-        }
-        plan = tp.copy(plan = tp.plan.copy(weeks = cloned))
-    }
-
     fun addExerciseToSelectedDay(exerciseId: String, template: SetTemplate) {
         val tp = plan ?: return
         val sel = selection as? Selection.Day ?: return
@@ -88,4 +78,178 @@ class AppState {
     }
     private fun slugify(s: String): String =
         s.lowercase(Locale.getDefault()).replace(Regex("[^a-z0-9]+"), "_").trim('_')
+
+    fun copyWeek(fromWeekIdx1Based: Int, toWeekIdx1Based: Int) {
+        val tp = plan ?: return
+        val p = tp.plan
+        val fromIdx = fromWeekIdx1Based - 1
+        val toIdx = toWeekIdx1Based - 1
+        if (fromIdx !in p.weeks.indices || toIdx !in p.weeks.indices) return
+        val source = p.weeks[fromIdx]
+
+        // Deep-ish copy: new lists for days/sessions/sets
+        val newDays = source.days.map { day ->
+            day.copy(
+                sessions = day.sessions.map { s ->
+                    s.copy(
+                        sets = s.sets.map { it.copy() } // SetSpec is a data class; rule objects are fine as-is
+                    )
+                }
+            )
+        }
+
+        val newWeeks = p.weeks.toMutableList()
+        newWeeks[toIdx] = p.weeks[toIdx].copy(days = newDays)
+        plan = tp.copy(plan = p.copy(weeks = newWeeks))
+    }
+
+    fun copySelectedWeekTo(targetWeekIdx1Based: Int) {
+        val current = (selection as? Selection.Week)?.index ?: return
+        copyWeek(current + 1, targetWeekIdx1Based)
+    }
+
+    fun copyWeek1ToAllWeeks() {
+        val tp = plan ?: return
+        val p = tp.plan
+        if (p.weeks.isEmpty()) return
+        val w1 = p.weeks.first()
+
+        val newDays = w1.days.map { day ->
+            day.copy(
+                sessions = day.sessions.map { s ->
+                    s.copy(
+                        sets = s.sets.map { it.copy() }
+                    )
+                }
+            )
+        }
+
+        val newWeeks = p.weeks.mapIndexed { idx, w ->
+            if (idx == 0) w else w.copy(days = newDays)
+        }
+        plan = tp.copy(plan = p.copy(weeks = newWeeks))
+    }
+
+
+    fun updateDayName(weekIdx: Int, dayIdx: Int, newName: String?) {
+        val tp = plan ?: return
+        val p = tp.plan
+        if (weekIdx !in p.weeks.indices) return
+        val week = p.weeks[weekIdx]
+        if (dayIdx !in week.days.indices) return
+        val old = week.days[dayIdx]
+        val newDay = old.copy(name = newName?.ifBlank { null })
+        val newDays = week.days.toMutableList().also { it[dayIdx] = newDay }
+        val newWeeks = p.weeks.toMutableList().also { it[weekIdx] = week.copy(days = newDays) }
+        plan = tp.copy(plan = p.copy(weeks = newWeeks))
+    }
+
+    fun updateExerciseNotes(weekIdx: Int, dayIdx: Int, sessionIdx: Int, notes: String?) {
+        val tp = plan ?: return
+        val p = tp.plan
+        if (weekIdx !in p.weeks.indices) return
+        val week = p.weeks[weekIdx]
+        if (dayIdx !in week.days.indices) return
+        val day = week.days[dayIdx]
+        if (sessionIdx !in day.sessions.indices) return
+        val sess = day.sessions[sessionIdx]
+        val newSess = sess.copy(notes = notes?.ifBlank { null })
+        val newSessions = day.sessions.toMutableList().also { it[sessionIdx] = newSess }
+        val newDays = week.days.toMutableList().also { it[dayIdx] = day.copy(sessions = newSessions) }
+        val newWeeks = p.weeks.toMutableList().also { it[weekIdx] = week.copy(days = newDays) }
+        plan = tp.copy(plan = p.copy(weeks = newWeeks))
+    }
+
+    fun addSetDuplicateLast(weekIdx: Int, dayIdx: Int, sessionIdx: Int) {
+        val tp = plan ?: return
+        val p = tp.plan
+        if (weekIdx !in p.weeks.indices) return
+        val week = p.weeks[weekIdx]
+        if (dayIdx !in week.days.indices) return
+        val day = week.days[dayIdx]
+        if (sessionIdx !in day.sessions.indices) return
+        val sess = day.sessions[sessionIdx]
+        val newSet = sess.sets.lastOrNull()?.copy() ?: SetSpec(reps = 5, target_rpe = null, rule = LoadRule.FREE_RPE)
+        val newSessions = day.sessions.toMutableList().also { it[sessionIdx] = sess.copy(sets = sess.sets + newSet) }
+        val newDays = week.days.toMutableList().also { it[dayIdx] = day.copy(sessions = newSessions) }
+        val newWeeks = p.weeks.toMutableList().also { it[weekIdx] = week.copy(days = newDays) }
+        plan = tp.copy(plan = p.copy(weeks = newWeeks))
+    }
+
+    fun duplicateSet(weekIdx: Int, dayIdx: Int, sessionIdx: Int, setIdx: Int) {
+        val tp = plan ?: return
+        val p = tp.plan
+        if (weekIdx !in p.weeks.indices) return
+        val week = p.weeks[weekIdx]
+        if (dayIdx !in week.days.indices) return
+        val day = week.days[dayIdx]
+        if (sessionIdx !in day.sessions.indices) return
+        val sess = day.sessions[sessionIdx]
+        if (setIdx !in sess.sets.indices) return
+        val clone = sess.sets[setIdx].copy()
+        val newSetList = sess.sets.toMutableList().also { it.add(setIdx + 1, clone) }
+        val newSessions = day.sessions.toMutableList().also { it[sessionIdx] = sess.copy(sets = newSetList) }
+        val newDays = week.days.toMutableList().also { it[dayIdx] = day.copy(sessions = newSessions) }
+        val newWeeks = p.weeks.toMutableList().also { it[weekIdx] = week.copy(days = newDays) }
+        plan = tp.copy(plan = p.copy(weeks = newWeeks))
+    }
+
+    fun removeSet(weekIdx: Int, dayIdx: Int, sessionIdx: Int, setIdx: Int) {
+        val tp = plan ?: return
+        val p = tp.plan
+        if (weekIdx !in p.weeks.indices) return
+        val week = p.weeks[weekIdx]
+        if (dayIdx !in week.days.indices) return
+        val day = week.days[dayIdx]
+        if (sessionIdx !in day.sessions.indices) return
+        val sess = day.sessions[sessionIdx]
+        if (setIdx !in sess.sets.indices) return
+        if (sess.sets.size <= 1) {
+            // allow removing last set? yes, resulting exercise can have zero sets
+        }
+        val newSetList = sess.sets.toMutableList().also { it.removeAt(setIdx) }
+        val newSessions = day.sessions.toMutableList().also { it[sessionIdx] = sess.copy(sets = newSetList) }
+        val newDays = week.days.toMutableList().also { it[dayIdx] = day.copy(sessions = newSessions) }
+        val newWeeks = p.weeks.toMutableList().also { it[weekIdx] = week.copy(days = newDays) }
+        plan = tp.copy(plan = p.copy(weeks = newWeeks))
+    }
+
+    fun updateSetReps(weekIdx: Int, dayIdx: Int, sessionIdx: Int, setIdx: Int, reps: Int) {
+        val tp = plan ?: return
+        val p = tp.plan
+        if (weekIdx !in p.weeks.indices) return
+        val week = p.weeks[weekIdx]
+        if (dayIdx !in week.days.indices) return
+        val day = week.days[dayIdx]
+        if (sessionIdx !in day.sessions.indices) return
+        val sess = day.sessions[sessionIdx]
+        if (setIdx !in sess.sets.indices) return
+
+        val newSet = sess.sets[setIdx].copy(reps = reps.coerceAtLeast(1))
+        val newSets = sess.sets.toMutableList().also { it[setIdx] = newSet }
+        val newSessions = day.sessions.toMutableList().also { it[sessionIdx] = sess.copy(sets = newSets) }
+        val newDays = week.days.toMutableList().also { it[dayIdx] = day.copy(sessions = newSessions) }
+        val newWeeks = p.weeks.toMutableList().also { it[weekIdx] = week.copy(days = newDays) }
+        plan = tp.copy(plan = p.copy(weeks = newWeeks))
+    }
+
+    fun updateSetRpe(weekIdx: Int, dayIdx: Int, sessionIdx: Int, setIdx: Int, rpe: Double?) {
+        val tp = plan ?: return
+        val p = tp.plan
+        if (weekIdx !in p.weeks.indices) return
+        val week = p.weeks[weekIdx]
+        if (dayIdx !in week.days.indices) return
+        val day = week.days[dayIdx]
+        if (sessionIdx !in day.sessions.indices) return
+        val sess = day.sessions[sessionIdx]
+        if (setIdx !in sess.sets.indices) return
+
+        val newSet = sess.sets[setIdx].copy(target_rpe = rpe)
+        val newSets = sess.sets.toMutableList().also { it[setIdx] = newSet }
+        val newSessions = day.sessions.toMutableList().also { it[sessionIdx] = sess.copy(sets = newSets) }
+        val newDays = week.days.toMutableList().also { it[dayIdx] = day.copy(sessions = newSessions) }
+        val newWeeks = p.weeks.toMutableList().also { it[weekIdx] = week.copy(days = newDays) }
+        plan = tp.copy(plan = p.copy(weeks = newWeeks))
+    }
+
 }

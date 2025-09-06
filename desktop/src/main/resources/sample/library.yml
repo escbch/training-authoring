@@ -1,3 +1,14 @@
+- id: "ee7a712d-c3fd-4c70-a48c-64693ea0cc3e"
+  name: "(Tempo) High Bar Squat"
+  tempo: "2-3-0"
+  aliases: []
+  muscles:
+    primary: "Quadtriceps"
+    secondary: "Hamstrings"
+    tertiary: "Glutes"
+  tags:
+  - "compound"
+  - "tempo"
 - id: "bench_press"
   name: "Bench Press"
   tempo: null
@@ -6,6 +17,27 @@
     primary: "Chest"
     secondary: "Shoulder"
     tertiary: "Triceps"
+  tags:
+  - "compound"
+  - "competition"
+- id: "cable_row"
+  name: "Cable Row"
+  tempo: null
+  aliases: []
+  muscles:
+    primary: "Back"
+    secondary: "Biceps"
+    tertiary: null
+  tags:
+  - "isolation"
+- id: "d9e71e2e-b79a-4846-a7cd-0f6b922681c1"
+  name: "Dead Lift"
+  tempo: null
+  aliases: []
+  muscles:
+    primary: "Back"
+    secondary: "Quadtriceps"
+    tertiary: "Glutes"
   tags:
   - "compound"
   - "competition"
@@ -19,6 +51,28 @@
     tertiary: "Triceps"
   tags:
   - "compound"
+- id: "e3e9744f-fa4c-4e35-9590-9ce0b5508a45"
+  name: "Low Bar Squat"
+  tempo: null
+  aliases: []
+  muscles:
+    primary: "Quadtriceps"
+    secondary: "Hamstrings"
+    tertiary: "Glutes"
+  tags:
+  - "compound"
+  - "competition"
+- id: "dd8a84b9-d4bc-4814-b639-780d256c9471"
+  name: "Paused Dead Lifts"
+  tempo: "0-2-0"
+  aliases: []
+  muscles:
+    primary: "Back"
+    secondary: "Hamstrings"
+    tertiary: "Glutes"
+  tags:
+  - "compound"
+  - "tempo"
 - id: "pull_ups"
   name: "Pull Ups"
   tempo: null
@@ -29,13 +83,3 @@
     tertiary: null
   tags:
   - "compound"
-- id: "cable_row"
-  name: "Cable Row"
-  tempo: null
-  aliases: []
-  muscles:
-    primary: "Back"
-    secondary: "Biceps"
-    tertiary: null
-  tags:
-  - "isolation"

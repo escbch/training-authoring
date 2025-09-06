@@ -1,4 +1,4 @@
-package ui.dialogs
+package ui.dialog
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -15,145 +15,102 @@ fun AddToDayDialog(
     onDismiss: () -> Unit,
     onCreate: (SetTemplate) -> Unit
 ) {
-    // Mode
-    var mode by remember { mutableStateOf(Mode.ANCHOR_PERCENT) }
+    var mode by remember { mutableStateOf(Mode.FREE_RPE) }
 
     // Common inputs
     var sets by remember { mutableStateOf("3") }
     var reps by remember { mutableStateOf("5") }
 
-    // Free RPE inputs
-    var freeTargetRpe by remember { mutableStateOf("7.0") }
+    // FREE_RPE inputs (series)
+    var rpesText by remember { mutableStateOf("") } // e.g., "8, 8, 7.5" or "8"
 
-    // Anchor → %E1RM inputs
-    var anchorRpe by remember { mutableStateOf("7.5") }
-    var percent by remember { mutableStateOf("0.70") } // 70% as 0.70
-    var percentsText by remember { mutableStateOf("") }
+    // ANCHOR_PERCENT inputs
+    var anchorIndex by remember { mutableStateOf("1") }
+    var percent by remember { mutableStateOf("70") } // fallback if list empty
+    var percentsText by remember { mutableStateOf("") } // "70, 65, 60"
     var roundTo by remember { mutableStateOf("2.5") }
-
-    fun parsePercents(text: String): List<Double>? {
-        if (text.isBlank()) return null
-        val tokens = text.split(',', ';', ' ')
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-        if (tokens.isEmpty()) return null
-        val list = tokens.map {
-            it.replace(',', '.').toDoubleOrNull() ?: return null
-        }
-        return list
-    }
-
-    fun canConfirm(): Boolean {
-        val setCount = sets.toIntOrNull() ?: return false
-        val repsCount = reps.toIntOrNull() ?: return false
-        if (setCount !in 1..20 || repsCount !in 1..50) return false
-
-        return when (mode) {
-            Mode.FREE_RPE ->
-                freeTargetRpe.toDoubleOrNull() != null
-
-            Mode.ANCHOR_PERCENT -> {
-                val anchorOk = anchorRpe.toDoubleOrNull() != null
-                val list = parsePercents(percentsText)
-                val listOk = !list.isNullOrEmpty() && list.all { it in 0.3..1.0 }
-                val singleOk = percent.replace(',', '.').toDoubleOrNull()?.let { it in 0.3..1.0 } == true
-
-                // If only 1 set (just the anchor), no percents are required.
-                anchorOk && (setCount == 1 || listOk || singleOk)
-            }
-        }
-    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Add “$exerciseName” to Day") },
         text = {
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    FilterChip(
-                        selected = mode == Mode.ANCHOR_PERCENT,
-                        onClick = { mode = Mode.ANCHOR_PERCENT },
-                        label = { Text("Anchor 1st → %E1RM") }
-                    )
-                    FilterChip(
-                        selected = mode == Mode.FREE_RPE,
-                        onClick = { mode = Mode.FREE_RPE },
-                        label = { Text("Free RPE (all)") }
-                    )
+                // Mode selector
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    FilterChip(selected = mode == Mode.FREE_RPE, onClick = { mode = Mode.FREE_RPE }, label = { Text("Target RPE per set") })
+                    FilterChip(selected = mode == Mode.ANCHOR_PERCENT, onClick = { mode = Mode.ANCHOR_PERCENT }, label = { Text("Anchor → %E1RM") })
                 }
+                Divider()
 
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(sets, { sets = it }, label = { Text("Sets") }, modifier = Modifier.weight(1f))
-                    OutlinedTextField(reps, { reps = it }, label = { Text("Reps") }, modifier = Modifier.weight(1f))
+                // Sets/Reps
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(value = sets, onValueChange = { sets = it.filter { c -> c.isDigit() }.take(2) }, singleLine = true, label = { Text("Sets") }, modifier = Modifier.weight(1f))
+                    OutlinedTextField(value = reps, onValueChange = { reps = it.filter { c -> c.isDigit() }.take(3) }, singleLine = true, label = { Text("Reps") }, modifier = Modifier.weight(1f))
                 }
 
                 when (mode) {
                     Mode.FREE_RPE -> {
                         OutlinedTextField(
-                            value = freeTargetRpe,
-                            onValueChange = { freeTargetRpe = it },
-                            label = { Text("Target RPE (all sets)") },
+                            value = rpesText,
+                            onValueChange = { rpesText = it },
+                            label = { Text("Target RPE(s) — comma-separated (e.g., 8, 8, 7.5). One value applies to all.") },
                             modifier = Modifier.fillMaxWidth()
                         )
-                        Text("All sets use target RPE with freely chosen weight.", style = MaterialTheme.typography.bodySmall)
                     }
                     Mode.ANCHOR_PERCENT -> {
-                        OutlinedTextField(
-                            value = anchorRpe,
-                            onValueChange = { anchorRpe = it },
-                            label = { Text("Anchor 1st set – target RPE") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        // Per-set percents (optional)
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            OutlinedTextField(value = anchorIndex, onValueChange = { anchorIndex = it.filter { c -> c.isDigit() }.take(2) }, singleLine = true, label = { Text("Anchor set index") }, modifier = Modifier.weight(1f))
+                            OutlinedTextField(value = roundTo, onValueChange = { roundTo = it.filter { c -> c.isDigit() || c=='.' || c==',' }.take(6) }, singleLine = true, label = { Text("Round to (kg)") }, modifier = Modifier.weight(1f))
+                        }
                         OutlinedTextField(
                             value = percentsText,
                             onValueChange = { percentsText = it },
-                            label = { Text("Percents for following sets (e.g. 0.70, 0.60)") },
+                            label = { Text("Percent(s) of E1RM — comma-separated (e.g., 70, 65, 60)") },
+                            supportingText = { Text("If left blank, will use single % below for all sets.") },
                             modifier = Modifier.fillMaxWidth()
                         )
-                        // Single percent fallback
                         OutlinedTextField(
                             value = percent,
-                            onValueChange = { percent = it },
-                            label = { Text("Single percent for all (e.g. 0.70)") },
+                            onValueChange = { percent = it.filter { c -> c.isDigit() || c=='.' || c==',' }.take(6) },
+                            singleLine = true,
+                            label = { Text("Single % of E1RM (fallback)") },
                             modifier = Modifier.fillMaxWidth()
                         )
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            OutlinedTextField(
-                                value = roundTo,
-                                onValueChange = { roundTo = it },
-                                label = { Text("Round to (kg)") },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        Text("If both fields are set, the per-set list wins. If you only want one set, leave percents empty.", style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
         },
         confirmButton = {
-            TextButton(enabled = canConfirm(), onClick = {
-                val setCount = sets.toInt()
-                val repsCount = reps.toInt()
-                val list = parsePercents(percentsText)
-
-                val tpl = when (mode) {
-                    Mode.FREE_RPE -> SetTemplate.FreeRpeAll(
-                        sets = setCount,
-                        reps = repsCount,
-                        targetRpe = freeTargetRpe.replace(',', '.').toDouble()
-                    )
-                    Mode.ANCHOR_PERCENT -> SetTemplate.AnchorThenPercent(
-                        totalSets = setCount,
-                        reps = repsCount,
-                        anchorRpe = anchorRpe.replace(',', '.').toDouble(),
-                        // if a per-set list is provided, it wins; otherwise use the single percent
-                        percents = list,
-                        percentOfE1rm = if (list.isNullOrEmpty())
-                            percent.replace(',', '.').toDoubleOrNull()
-                        else null,
-                        roundTo = roundTo.replace(',', '.').toDouble()
-                    )
+            Button(onClick = {
+                val s = sets.toIntOrNull()?.coerceIn(1, 99) ?: 1
+                val r = reps.toIntOrNull()?.coerceIn(1, 999) ?: 1
+                val tpl: SetTemplate = when (mode) {
+                    Mode.FREE_RPE -> {
+                        val list = rpesText.split(',', ' ', ';')
+                            .mapNotNull { it.trim().replace(',', '.').toDoubleOrNull() }
+                            .filter { it > 0.0 }
+                        if (list.isEmpty()) {
+                            SetTemplate.FreeRpeAll(sets = s, reps = r, targetRpe = null)
+                        } else if (list.size == 1) {
+                            SetTemplate.FreeRpeAll(sets = s, reps = r, targetRpe = list.first())
+                        } else {
+                            SetTemplate.FreeRpeSeries(sets = s, reps = r, targetRpes = list)
+                        }
+                    }
+                    Mode.ANCHOR_PERCENT -> {
+                        val list = percentsText.split(',', ' ', ';')
+                            .mapNotNull { it.trim().replace(',', '.').toDoubleOrNull() }
+                            .filter { it > 0.0 }
+                        SetTemplate.AnchorThenPercent(
+                            totalSets = s,
+                            reps = r,
+                            anchorIndex = anchorIndex.toIntOrNull()?.coerceIn(1, s) ?: 1,
+                            // if a per-set list is provided, it wins; otherwise use the single percent
+                            percents = list.ifEmpty { null },
+                            percentOfE1rm = if (list.isEmpty()) percent.replace(',', '.').toDoubleOrNull() else null,
+                            roundTo = roundTo.replace(',', '.').toDoubleOrNull() ?: 2.5
+                        )
+                    }
                 }
                 onCreate(tpl)
             }) { Text("Add") }
