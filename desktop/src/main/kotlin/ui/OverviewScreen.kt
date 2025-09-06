@@ -30,6 +30,7 @@ fun OverviewScreen(
 ) {
     var plans by remember { mutableStateOf(PlanIndex.listPlanFiles()) }
     var showNew by remember { mutableStateOf(false) }
+    var confirmDelete: File? by remember { mutableStateOf(null) }
 
     fun refresh() { plans = PlanIndex.listPlanFiles() }
 
@@ -71,7 +72,8 @@ fun OverviewScreen(
                                     onCopy = {
                                         onCopyPlan(f)
                                         refresh()
-                                    }
+                                    },
+                                    onDelete = { confirmDelete = f }
                                 )
                                 Divider()
                             }
@@ -86,6 +88,24 @@ fun OverviewScreen(
             }
         }
     }
+
+    if (confirmDelete != null) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = null },
+            title = { Text("Delete plan?") },
+            text = { Text("This will delete “${PlanIndex.readPlanTitle(confirmDelete!!)}”. This action cannot be undone.") },
+            confirmButton = {
+                Button(onClick = {
+                    PlanIndex.deletePlan(confirmDelete!!)
+                    confirmDelete = null
+                    refresh()
+                }) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDelete = null }) { Text("Cancel") }
+            }
+        )
+    }
 }
 
 @Composable
@@ -93,7 +113,8 @@ private fun PlanRow(
     title: String,
     file: File,
     onOpen: () -> Unit,
-    onCopy: () -> Unit
+    onCopy: () -> Unit,
+    onDelete: () -> Unit
 ) {
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f).clickable { onOpen() }) {
@@ -103,6 +124,7 @@ private fun PlanRow(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = onCopy) { Text("Copy") }
             Button(onClick = onOpen) { Text("Edit") }
+            TextButton(onClick = onDelete) { Text("Delete") }
         }
     }
 }

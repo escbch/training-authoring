@@ -56,6 +56,13 @@ object PlanIndex {
         return file
     }
 
+    fun deletePlan(file: File): Boolean {
+        val isLast = (platform.Settings.lastPlanFile()?.absolutePath == file.absolutePath)
+        val ok = file.exists() && file.delete()
+        if (ok && isLast) platform.Settings.setLastPlan(null)
+        return ok
+    }
+
     private fun uniqueFileName(baseName: String): File {
         val safe = baseName.trim().ifBlank { "plan" }
             .replace(Regex("""[^\w\-. ]+"""), "_")
